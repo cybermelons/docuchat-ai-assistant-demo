@@ -1,36 +1,81 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# AI Document Assistant
+
+An intelligent document assistant that helps you chat with your documents using AI. Upload documents, ask questions, and get instant answers based on your content.
+
+## Features
+
+- **Document Upload**: Support for multiple file formats
+  - PDF files (text extraction only, no images)
+  - Text files (.txt)
+  - Word documents (.docx)
+- **AI-Powered Chat**: Ask questions about your uploaded documents
+- **Session-Based Storage**: Each visitor gets their own isolated workspace
+- **Vector Search**: Intelligent document retrieval using embeddings
+- **Progress Tracking**: Real-time upload and processing status
 
 ## Getting Started
 
-First, run the development server:
+### Prerequisites
 
+- Node.js 18+ 
+- pnpm package manager
+- Groq API key (for chat functionality)
+
+### Installation
+
+1. Clone the repository
+2. Install dependencies:
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+pnpm install
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+3. Set up environment variables:
+```bash
+cp .env.example .env.local
+```
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+Add your Groq API key to `.env.local`:
+```
+GROQ_API_KEY=your_api_key_here
+```
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+4. Run the development server:
+```bash
+pnpm dev
+```
 
-## Learn More
+Open [http://localhost:3000](http://localhost:3000) to use the application.
 
-To learn more about Next.js, take a look at the following resources:
+## How It Works
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+1. **Upload Documents**: Drag and drop or click to upload PDF, TXT, or DOCX files
+2. **Processing**: Documents are parsed and split into chunks for efficient retrieval
+3. **Ask Questions**: Type questions in the chat interface
+4. **Get Answers**: AI searches through your documents and provides relevant answers
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## Technical Stack
 
-## Deploy on Vercel
+- **Frontend**: Next.js 15, React, TypeScript, Tailwind CSS
+- **AI/ML**: Groq API (LLM), Transformers.js (embeddings)
+- **Document Processing**: PDF.js (client-side PDF parsing)
+- **Database**: Supabase with pgvector for vector similarity search
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## Limitations
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+- PDF support is text-only (images and complex layouts are not processed)
+- Maximum file size: 50MB
+- Password-protected PDFs are not supported
+- Session data is temporary (24-hour retention)
+
+## Development
+
+```bash
+# Run development server
+pnpm dev
+
+# Build for production
+pnpm build
+
+# Run production build
+pnpm start
+```
