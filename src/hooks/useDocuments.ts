@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react'
 import { Document, getSessionId } from '@/lib/supabase'
 import { ProcessingProgress } from '@/lib/document-processor'
+import { parsePDFClient } from '@/lib/client-pdf-parser'
 
 export function useDocuments() {
   const [documents, setDocuments] = useState<Document[]>([])
@@ -52,8 +53,26 @@ export function useDocuments() {
       setProcessingProgress({ stage: 'uploading', progress: 0, message: 'Starting upload...' })
       
       const sessionId = getSessionId()
+      let processedFile = file
+      
+      // Handle PDF parsing on client side
+      if (file.type === 'application/pdf' || file.name.endsWith('.pdf')) {
+        setProcessingProgress({ stage: 'parsing', progress: 20, message: 'Processing PDF...' })
+        const arrayBuffer = await file.arrayBuffer()
+        const parsed = await parsePDFClient(arrayBuffer)
+        
+        // Create a new text file with the extracted content
+        const textBlob = new Blob([parsed.text], { type: 'text/plain' })
+        processedFile = new File([textBlob], file.name.replace('.pdf', '_parsed.txt'), {
+          type: 'text/plain',
+          lastModified: Date.now()
+        })
+      }
+      
       const formData = new FormData()
-      formData.append('file', file)
+      formData.append('file', processedFile)
+      formData.append('originalName', file.name)
+      formData.append('originalType', file.type)
       
       const response = await fetch('/api/documents', {
         method: 'POST',

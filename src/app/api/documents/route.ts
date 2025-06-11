@@ -39,6 +39,8 @@ export async function POST(request: NextRequest) {
     
     const formData = await request.formData()
     const file = formData.get('file') as File
+    const originalName = formData.get('originalName') as string
+    const originalType = formData.get('originalType') as string
     
     if (!file) {
       return NextResponse.json(
@@ -47,8 +49,16 @@ export async function POST(request: NextRequest) {
       )
     }
     
+    // Use original name if it was a PDF that got converted
+    const fileName = originalName || file.name
+    
     // Process document with session ID
     const document = await processDocument(file, sessionId)
+    
+    // Update document with original filename if it was converted
+    if (originalName) {
+      document.filename = originalName
+    }
     
     return NextResponse.json({ document })
   } catch (error) {

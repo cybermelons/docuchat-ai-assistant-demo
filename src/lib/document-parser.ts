@@ -9,18 +9,9 @@ export interface ParsedDocument {
 export async function parseDocument(file: File): Promise<ParsedDocument> {
   const arrayBuffer = await file.arrayBuffer()
   
-  if (file.type === 'application/pdf') {
-    // For demo purposes, we'll just indicate this is a PDF
-    // In production, use a proper PDF parsing service
-    return {
-      text: `[PDF Document: ${file.name}]\n\nPDF parsing is not available in this demo. Please try uploading a .txt or .docx file instead.\n\nFor production applications, consider using:\n- PDF.js for client-side parsing\n- A cloud service like AWS Textract\n- A server-side PDF processing service`,
-      pageCount: 1,
-      metadata: { 
-        note: 'PDF parsing disabled for demo',
-        filename: file.name,
-        size: file.size
-      }
-    }
+  if (file.type === 'application/pdf' || file.name.endsWith('.pdf')) {
+    // PDFs are now parsed on the client side
+    throw new Error('PDF files should be parsed on the client side before upload')
   } else if (
     file.type === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' ||
     file.name.endsWith('.docx')
@@ -32,6 +23,7 @@ export async function parseDocument(file: File): Promise<ParsedDocument> {
     throw new Error(`Unsupported file type: ${file.type}`)
   }
 }
+
 
 async function parseDOCX(arrayBuffer: ArrayBuffer): Promise<ParsedDocument> {
   try {
