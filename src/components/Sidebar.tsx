@@ -8,19 +8,21 @@ interface SidebarProps {
   documents: any[];
   selectedDoc: string | null;
   onSelectDoc: (docId: string) => void;
-  onUploadDoc: (docs: any[]) => void;
+  onUploadDoc: (file: File) => Promise<any>;
+  onDeleteDoc: (docId: string) => Promise<void>;
+  processingProgress: any;
 }
 
-export default function Sidebar({ documents, selectedDoc, onSelectDoc, onUploadDoc }: SidebarProps) {
-  const onDrop = useCallback((acceptedFiles: File[]) => {
-    // Process files here
-    const newDocs = acceptedFiles.map(file => ({
-      id: Date.now() + Math.random(),
-      name: file.name,
-      file: file,
-      uploadedAt: new Date()
-    }));
-    onUploadDoc(newDocs);
+export default function Sidebar({ documents, selectedDoc, onSelectDoc, onUploadDoc, onDeleteDoc, processingProgress }: SidebarProps) {
+  const onDrop = useCallback(async (acceptedFiles: File[]) => {
+    // Process one file at a time
+    for (const file of acceptedFiles) {
+      try {
+        await onUploadDoc(file);
+      } catch (error) {
+        console.error('Error uploading file:', error);
+      }
+    }
   }, [onUploadDoc]);
 
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
@@ -57,6 +59,26 @@ export default function Sidebar({ documents, selectedDoc, onSelectDoc, onUploadD
             PDF, DOC, DOCX, TXT
           </p>
         </div>
+        
+        {/* Processing Progress */}
+        {processingProgress && (
+          <div className="mt-4 bg-blue-50 rounded-lg p-3">
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-xs font-medium text-blue-700">
+                {processingProgress.message}
+              </span>
+              <span className="text-xs text-blue-600">
+                {processingProgress.progress}%
+              </span>
+            </div>
+            <div className="w-full bg-blue-200 rounded-full h-1.5">
+              <div 
+                className="bg-blue-600 h-1.5 rounded-full transition-all duration-300"
+                style={{ width: `${processingProgress.progress}%` }}
+              />
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Documents List */}
@@ -68,20 +90,31 @@ export default function Sidebar({ documents, selectedDoc, onSelectDoc, onUploadD
         </div>
         <div className="space-y-1 px-2">
           {documents.map((doc) => (
-            <button
+            <div
               key={doc.id}
-              onClick={() => onSelectDoc(doc.id)}
-              className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg transition-colors ${
+              className={`group flex items-center gap-3 px-3 py-2 rounded-lg transition-colors ${
                 selectedDoc === doc.id
                   ? 'bg-blue-50 text-blue-700'
                   : 'hover:bg-gray-50 text-gray-700'
               }`}
             >
-              <FileText className="w-4 h-4 flex-shrink-0" />
-              <span className="text-sm truncate text-left flex-1">
-                {doc.name}
-              </span>
-            </button>
+              <button
+                onClick={() => onSelectDoc(doc.id)}
+                className="flex items-center gap-3 flex-1 text-left"
+              >
+                <FileText className="w-4 h-4 flex-shrink-0" />
+                <span className="text-sm truncate">
+                  {doc.filename}
+                </span>
+              </button>
+              <button
+                onClick={() => onDeleteDoc(doc.id)}
+                className="opacity-0 group-hover:opacity-100 p-1 hover:bg-red-100 rounded transition-all"
+                title="Delete document"
+              >
+                <Trash2 className="w-3 h-3 text-red-600" />
+              </button>
+            </div>
           ))}
         </div>
       </div>
@@ -89,7 +122,7 @@ export default function Sidebar({ documents, selectedDoc, onSelectDoc, onUploadD
       {/* Footer */}
       <div className="p-4 border-t border-gray-200">
         <p className="text-xs text-gray-500 text-center">
-          Powered by OpenAI & Claude
+          Powered by Transformers.js & Groq
         </p>
       </div>
     </div>

@@ -34,11 +34,8 @@ export async function initializeSession() {
     console.error('Error initializing session:', error)
   }
   
-  // Set session ID for RLS policies
-  await supabase.rpc('set_config', {
-    setting: 'app.current_session_id',
-    value: sessionId
-  })
+  // For local development, RLS will use the session from the context
+  // In production, you might want to pass this via headers or JWT
   
   return sessionId
 }
