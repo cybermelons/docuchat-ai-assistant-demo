@@ -1,7 +1,6 @@
 import { useState, useEffect, useCallback } from 'react'
 import { Document, getSessionId } from '@/lib/supabase'
 import { ProcessingProgress } from '@/lib/document-processor'
-import { parsePDFClient } from '@/lib/client-pdf-parser'
 
 export function useDocuments() {
   const [documents, setDocuments] = useState<Document[]>([])
@@ -52,14 +51,38 @@ export function useDocuments() {
       setError(null)
       setProcessingProgress({ stage: 'uploading', progress: 0, message: 'Starting upload...' })
       
+      // File size validation
+      const MAX_FILE_SIZE = 50 * 1024 * 1024 // 50MB
+      const WARN_FILE_SIZE = 10 * 1024 * 1024 // 10MB
+      
+      if (file.size > MAX_FILE_SIZE) {
+        throw new Error(`File size exceeds 50MB limit. Please use a smaller file.`)
+      }
+      
+      if (file.size > WARN_FILE_SIZE) {
+        console.warn(`Large file detected (${(file.size / 1024 / 1024).toFixed(1)}MB). Processing may take longer.`)
+      }
+      
       const sessionId = getSessionId()
       let processedFile = file
       
       // Handle PDF parsing on client side
       if (file.type === 'application/pdf' || file.name.endsWith('.pdf')) {
-        setProcessingProgress({ stage: 'parsing', progress: 20, message: 'Processing PDF...' })
+        setProcessingProgress({ stage: 'parsing', progress: 10, message: 'Loading PDF...' })
+        
+        // Dynamic import to avoid SSR issues
+        const { parsePDFClient } = await import('@/lib/client-pdf-parser')
+        
         const arrayBuffer = await file.arrayBuffer()
-        const parsed = await parsePDFClient(arrayBuffer)
+        
+        // Parse with progress callback
+        const parsed = await parsePDFClient(arrayBuffer, (progress) => {
+          setProcessingProgress({
+            stage: 'parsing',
+            progress: 10 + (progress.percentage * 0.4), // 10-50% range
+            message: `Processing page ${progress.currentPage} of ${progress.totalPages}...`
+          })
+        })
         
         // Create a new text file with the extracted content
         const textBlob = new Blob([parsed.text], { type: 'text/plain' })
@@ -67,6 +90,8 @@ export function useDocuments() {
           type: 'text/plain',
           lastModified: Date.now()
         })
+        
+        setProcessingProgress({ stage: 'parsing', progress: 50, message: 'PDF processed, uploading...' })
       }
       
       const formData = new FormData()
@@ -96,9 +121,28 @@ export function useDocuments() {
       
       return data.document
     } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'Failed to upload document'
+      let errorMessage = 'Failed to upload document'
+      
+      if (err instanceof Error) {
+        // Provide user-friendly error messages
+        if (err.message.includes('50MB limit')) {
+          errorMessage = err.message
+        } else if (err.message.includes('Password-protected')) {
+          errorMessage = 'Password-protected PDFs are not supported'
+        } else if (err.message.includes('corrupted')) {
+          errorMessage = 'This PDF appears to be corrupted or invalid'
+        } else if (err.message.includes('No text content')) {
+          errorMessage = 'No text found in PDF. This might be a scanned image.'
+        } else {
+          errorMessage = err.message
+        }
+      }
+      
       setError(errorMessage)
       setProcessingProgress({ stage: 'error', progress: 0, message: errorMessage })
+      
+      // Clear progress after showing error
+      setTimeout(() => setProcessingProgress(null), 5000)
       throw err
     }
   }
