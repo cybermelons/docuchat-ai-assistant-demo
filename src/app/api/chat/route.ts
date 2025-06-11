@@ -33,7 +33,9 @@ export async function POST(request: NextRequest) {
       })
     
     // Search for relevant document chunks
+    console.log('Searching for chunks with sessionId:', sessionId)
     const relevantChunks = await searchDocuments(message, sessionId, 5)
+    console.log('Found chunks:', relevantChunks.length)
     
     if (relevantChunks.length === 0) {
       const noDocsMessage = "I don't have any documents to search through yet. Please upload a document first, and then I'll be happy to answer questions about it!"
@@ -54,10 +56,12 @@ export async function POST(request: NextRequest) {
     }
     
     // Generate response using Groq
+    console.log('Generating response with Groq...')
     const response = await generateChatResponse({
       query: message,
       relevantChunks
     })
+    console.log('Generated response:', response.substring(0, 100) + '...')
     
     // Save assistant response
     await supabase
