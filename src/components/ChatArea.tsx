@@ -2,6 +2,11 @@
 
 import { useState, useRef, useEffect } from "react";
 import { Send, Bot, User } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Card } from "@/components/ui/card";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 
 interface Message {
   id: string;
@@ -45,27 +50,27 @@ export default function ChatArea({ selectedDoc, documents, messages, onSendMessa
   return (
     <div className="flex-1 flex flex-col">
       {/* Header */}
-      <div className="bg-white border-b border-gray-200 px-6 py-4">
-        <h2 className="text-lg font-semibold text-gray-900">
+      <div className="bg-background border-b px-6 py-4">
+        <h2 className="text-lg font-semibold">
           {selectedDocument ? selectedDocument.filename : 'Chat with your documents'}
         </h2>
         {selectedDocument && (
-          <p className="text-sm text-gray-600">
+          <p className="text-sm text-muted-foreground">
             Ask questions about this document
           </p>
         )}
       </div>
 
       {/* Messages Area */}
-      <div className="flex-1 overflow-y-auto bg-gray-50">
+      <ScrollArea className="flex-1 bg-muted/10">
         {documents.length === 0 ? (
           <div className="h-full flex items-center justify-center">
             <div className="text-center">
-              <Bot className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-              <h3 className="text-lg font-medium text-gray-900 mb-2">
+              <Bot className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
+              <h3 className="text-lg font-medium mb-2">
                 Welcome to DocuChat
               </h3>
-              <p className="text-gray-600 max-w-sm">
+              <p className="text-muted-foreground max-w-sm">
                 Upload a document and select it to start asking questions. 
                 I'll help you understand and analyze your documents.
               </p>
@@ -74,15 +79,15 @@ export default function ChatArea({ selectedDoc, documents, messages, onSendMessa
         ) : (
           <div className="max-w-4xl mx-auto p-4 space-y-4">
             {messages.length === 0 && (
-              <div className="bg-blue-50 rounded-lg p-4 text-sm text-blue-700">
+              <Card className="p-4">
                 <p className="font-medium mb-2">Ready to help!</p>
-                <p>Try asking questions like:</p>
-                <ul className="list-disc list-inside mt-2 space-y-1">
+                <p className="text-sm text-muted-foreground">Try asking questions like:</p>
+                <ul className="list-disc list-inside mt-2 space-y-1 text-sm text-muted-foreground">
                   <li>What is the main topic of this document?</li>
                   <li>Summarize the key points</li>
                   <li>What are the important dates mentioned?</li>
                 </ul>
-              </div>
+              </Card>
             )}
             
             {messages.map((message) => (
@@ -95,66 +100,66 @@ export default function ChatArea({ selectedDoc, documents, messages, onSendMessa
                 <div className={`flex gap-3 max-w-3xl ${
                   message.role === 'user' ? 'flex-row-reverse' : ''
                 }`}>
-                  <div className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 ${
-                    message.role === 'assistant' ? 'bg-blue-100' : 'bg-gray-200'
-                  }`}>
-                    {message.role === 'assistant' ? (
-                      <Bot className="w-5 h-5 text-blue-600" />
-                    ) : (
-                      <User className="w-5 h-5 text-gray-600" />
-                    )}
-                  </div>
-                  <div className={`rounded-lg px-4 py-2 ${
-                    message.role === 'assistant' 
-                      ? 'bg-white border border-gray-200' 
-                      : 'bg-blue-600 text-white'
+                  <Avatar className="w-8 h-8">
+                    <AvatarFallback className={message.role === 'assistant' ? 'bg-primary/10' : 'bg-muted'}>
+                      {message.role === 'assistant' ? (
+                        <Bot className="w-5 h-5" />
+                      ) : (
+                        <User className="w-5 h-5" />
+                      )}
+                    </AvatarFallback>
+                  </Avatar>
+                  <Card className={`px-4 py-2 ${
+                    message.role === 'user' ? 'bg-primary text-primary-foreground' : ''
                   }`}>
                     <p className="text-sm whitespace-pre-wrap">{message.content}</p>
-                  </div>
+                  </Card>
                 </div>
               </div>
             ))}
             
             {sending && (
               <div className="flex gap-3 justify-start">
-                <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center">
-                  <Bot className="w-5 h-5 text-blue-600" />
-                </div>
-                <div className="bg-white border border-gray-200 rounded-lg px-4 py-2">
+                <Avatar className="w-8 h-8">
+                  <AvatarFallback className="bg-primary/10">
+                    <Bot className="w-5 h-5" />
+                  </AvatarFallback>
+                </Avatar>
+                <Card className="px-4 py-2">
                   <div className="flex space-x-2">
-                    <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" />
-                    <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0.1s' }} />
-                    <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }} />
+                    <div className="w-2 h-2 bg-muted-foreground rounded-full animate-bounce" />
+                    <div className="w-2 h-2 bg-muted-foreground rounded-full animate-bounce" style={{ animationDelay: '0.1s' }} />
+                    <div className="w-2 h-2 bg-muted-foreground rounded-full animate-bounce" style={{ animationDelay: '0.2s' }} />
                   </div>
-                </div>
+                </Card>
               </div>
             )}
             
             <div ref={messagesEndRef} />
           </div>
         )}
-      </div>
+      </ScrollArea>
 
       {/* Input Area */}
       {documents.length > 0 && (
-        <div className="bg-white border-t border-gray-200 p-4">
+        <div className="bg-background border-t p-4">
           <form onSubmit={handleSubmit} className="max-w-4xl mx-auto">
             <div className="flex gap-3">
-              <input
+              <Input
                 type="text"
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
                 placeholder="Ask a question about the document..."
-                className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="flex-1"
                 disabled={sending}
               />
-              <button
+              <Button
                 type="submit"
                 disabled={!input.trim() || sending}
-                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                size="icon"
               >
                 <Send className="w-5 h-5" />
-              </button>
+              </Button>
             </div>
           </form>
         </div>

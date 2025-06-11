@@ -3,6 +3,11 @@
 import { useCallback } from "react";
 import { useDropzone } from "react-dropzone";
 import { FileText, Upload, Trash2 } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { toast } from "sonner";
+import { DocumentListSkeleton } from "./DocumentSkeleton";
 
 interface SidebarProps {
   documents: any[];
@@ -11,9 +16,10 @@ interface SidebarProps {
   onUploadDoc: (file: File) => Promise<any>;
   onDeleteDoc: (docId: string) => Promise<void>;
   processingProgress: any;
+  loading?: boolean;
 }
 
-export default function Sidebar({ documents, selectedDoc, onSelectDoc, onUploadDoc, onDeleteDoc, processingProgress }: SidebarProps) {
+export default function Sidebar({ documents, selectedDoc, onSelectDoc, onUploadDoc, onDeleteDoc, processingProgress, loading }: SidebarProps) {
   const onDrop = useCallback(async (acceptedFiles: File[]) => {
     // Process one file at a time
     for (const file of acceptedFiles) {
@@ -36,66 +42,73 @@ export default function Sidebar({ documents, selectedDoc, onSelectDoc, onUploadD
   });
 
   return (
-    <div className="w-80 bg-white border-r border-gray-200 flex flex-col">
-      <div className="p-6 border-b border-gray-200">
-        <h1 className="text-2xl font-bold text-gray-900">DocuChat</h1>
-        <p className="text-sm text-gray-600 mt-1">AI Document Assistant</p>
+    <div className="w-80 bg-background border-r flex flex-col">
+      <div className="p-6 border-b">
+        <h1 className="text-2xl font-bold">DocuChat</h1>
+        <p className="text-sm text-muted-foreground mt-1">AI Document Assistant</p>
       </div>
 
       {/* Upload Area */}
       <div className="p-4">
-        <div
+        <Card
           {...getRootProps()}
-          className={`border-2 border-dashed rounded-lg p-6 text-center cursor-pointer transition-colors ${
-            isDragActive ? 'border-blue-500 bg-blue-50' : 'border-gray-300 hover:border-gray-400'
+          className={`border-2 border-dashed p-6 text-center cursor-pointer transition-colors ${
+            isDragActive ? 'border-primary bg-primary/5' : 'hover:border-muted-foreground/50'
           }`}
         >
           <input {...getInputProps()} />
-          <Upload className="w-8 h-8 mx-auto text-gray-400 mb-2" />
-          <p className="text-sm text-gray-600">
+          <Upload className="w-8 h-8 mx-auto text-muted-foreground mb-2" />
+          <p className="text-sm text-muted-foreground">
             {isDragActive ? 'Drop files here...' : 'Drag & drop or click to upload'}
           </p>
-          <p className="text-xs text-gray-500 mt-1">
+          <p className="text-xs text-muted-foreground mt-1">
             PDF, DOC, DOCX, TXT
           </p>
-        </div>
+        </Card>
         
         {/* Processing Progress */}
         {processingProgress && (
-          <div className="mt-4 bg-blue-50 rounded-lg p-3">
+          <Card className="mt-4 p-3">
             <div className="flex items-center justify-between mb-2">
-              <span className="text-xs font-medium text-blue-700">
+              <span className="text-xs font-medium">
                 {processingProgress.message}
               </span>
-              <span className="text-xs text-blue-600">
+              <span className="text-xs text-muted-foreground">
                 {processingProgress.progress}%
               </span>
             </div>
-            <div className="w-full bg-blue-200 rounded-full h-1.5">
+            <div className="w-full bg-secondary rounded-full h-1.5">
               <div 
-                className="bg-blue-600 h-1.5 rounded-full transition-all duration-300"
+                className="bg-primary h-1.5 rounded-full transition-all duration-300"
                 style={{ width: `${processingProgress.progress}%` }}
               />
             </div>
-          </div>
+          </Card>
         )}
       </div>
 
       {/* Documents List */}
-      <div className="flex-1 overflow-y-auto">
+      <ScrollArea className="flex-1">
         <div className="px-4 py-2">
-          <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wider">
+          <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
             Documents ({documents.length})
           </h3>
         </div>
         <div className="space-y-1 px-2">
-          {documents.map((doc) => (
-            <div
+          {loading ? (
+            <DocumentListSkeleton />
+          ) : documents.length === 0 ? (
+            <p className="text-sm text-muted-foreground text-center py-8">
+              No documents yet
+            </p>
+          ) : (
+            documents.map((doc) => (
+            <Card
               key={doc.id}
-              className={`group flex items-center gap-3 px-3 py-2 rounded-lg transition-colors ${
+              className={`group flex items-center gap-3 px-3 py-2 transition-colors cursor-pointer ${
                 selectedDoc === doc.id
-                  ? 'bg-blue-50 text-blue-700'
-                  : 'hover:bg-gray-50 text-gray-700'
+                  ? 'bg-primary/10 border-primary'
+                  : 'hover:bg-muted'
               }`}
             >
               <button
@@ -107,21 +120,24 @@ export default function Sidebar({ documents, selectedDoc, onSelectDoc, onUploadD
                   {doc.filename}
                 </span>
               </button>
-              <button
+              <Button
                 onClick={() => onDeleteDoc(doc.id)}
-                className="opacity-0 group-hover:opacity-100 p-1 hover:bg-red-100 rounded transition-all"
+                variant="ghost"
+                size="icon"
+                className="opacity-0 group-hover:opacity-100 h-8 w-8"
                 title="Delete document"
               >
-                <Trash2 className="w-3 h-3 text-red-600" />
-              </button>
-            </div>
-          ))}
+                <Trash2 className="w-3 h-3 text-destructive" />
+              </Button>
+            </Card>
+          )))
+          }
         </div>
-      </div>
+      </ScrollArea>
 
       {/* Footer */}
-      <div className="p-4 border-t border-gray-200">
-        <p className="text-xs text-gray-500 text-center">
+      <div className="p-4 border-t">
+        <p className="text-xs text-muted-foreground text-center">
           Powered by Transformers.js & Groq
         </p>
       </div>

@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react'
 import { Document, getSessionId } from '@/lib/supabase'
 import { ProcessingProgress } from '@/lib/document-processor'
+import { toast } from 'sonner'
 
 export function useDocuments() {
   const [documents, setDocuments] = useState<Document[]>([])
@@ -40,7 +41,9 @@ export function useDocuments() {
       setDocuments(data.documents || [])
     } catch (err) {
       console.error('Error fetching documents:', err)
-      setError(err instanceof Error ? err.message : 'Failed to fetch documents')
+      const errorMessage = err instanceof Error ? err.message : 'Failed to fetch documents'
+      setError(errorMessage)
+      toast.error(errorMessage)
     } finally {
       setLoading(false)
     }
@@ -119,6 +122,7 @@ export function useDocuments() {
       // Clear progress after a delay
       setTimeout(() => setProcessingProgress(null), 3000)
       
+      toast.success('Document uploaded successfully!')
       return data.document
     } catch (err) {
       let errorMessage = 'Failed to upload document'
@@ -143,6 +147,8 @@ export function useDocuments() {
       
       // Clear progress after showing error
       setTimeout(() => setProcessingProgress(null), 5000)
+      
+      toast.error(errorMessage)
       throw err
     }
   }
@@ -165,8 +171,11 @@ export function useDocuments() {
       }
       
       setDocuments(prev => prev.filter(doc => doc.id !== documentId))
+      toast.success('Document deleted')
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to delete document')
+      const errorMessage = err instanceof Error ? err.message : 'Failed to delete document'
+      setError(errorMessage)
+      toast.error(errorMessage)
       throw err
     }
   }
