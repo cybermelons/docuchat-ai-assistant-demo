@@ -1,7 +1,6 @@
-import { supabase, getSessionId, Document, DocumentChunk } from './supabase'
+import { supabase, Document, DocumentChunk } from './supabase'
 import { parseDocument, validateFile } from './document-parser'
-import { chunkText, generateEmbedding } from './embeddings'
-import { nanoid } from 'nanoid'
+import { chunkText } from './embeddings'
 
 export interface ProcessingProgress {
   stage: 'uploading' | 'parsing' | 'chunking' | 'embedding' | 'complete' | 'error'
@@ -11,9 +10,9 @@ export interface ProcessingProgress {
 
 export async function processDocument(
   file: File,
+  sessionId: string,
   onProgress?: (progress: ProcessingProgress) => void
 ): Promise<Document> {
-  const sessionId = getSessionId()
   
   try {
     // Validate file
@@ -58,14 +57,12 @@ export async function processDocument(
     onProgress?.({ stage: 'embedding', progress: 60, message: 'Generating embeddings...' })
     
     const chunkPromises = chunks.map(async (chunkText, index) => {
-      const embedding = await generateEmbedding(chunkText)
-      
       const chunk: Partial<DocumentChunk> = {
         document_id: doc.id,
         session_id: sessionId,
         chunk_index: index,
         content: chunkText,
-        embedding: embedding as any, // Supabase will handle the vector type
+        // Embedding will be generated client-side
         metadata: {
           filename: file.name,
           chunk_index: index,
@@ -108,9 +105,7 @@ export async function processDocument(
   }
 }
 
-export async function getDocuments(): Promise<Document[]> {
-  const sessionId = getSessionId()
-  
+export async function getDocuments(sessionId: string): Promise<Document[]> {
   const { data, error } = await supabase
     .from('documents')
     .select('*')
@@ -121,9 +116,7 @@ export async function getDocuments(): Promise<Document[]> {
   return data || []
 }
 
-export async function deleteDocument(documentId: string): Promise<void> {
-  const sessionId = getSessionId()
-  
+export async function deleteDocument(documentId: string, sessionId: string): Promise<void> {
   // Chunks will be deleted automatically due to CASCADE
   const { error } = await supabase
     .from('documents')
@@ -136,26 +129,35 @@ export async function deleteDocument(documentId: string): Promise<void> {
 
 export async function searchDocuments(
   query: string,
+  sessionId: string,
   limit: number = 5
 ): Promise<Array<{ content: string; similarity: number; metadata: any }>> {
-  const sessionId = getSessionId()
-  
-  // Generate embedding for query
-  const queryEmbedding = await generateEmbedding(query)
-  
-  // Search using Supabase function
-  const { data, error } = await supabase.rpc('search_document_chunks', {
-    query_embedding: queryEmbedding,
-    query_session_id: sessionId,
-    match_threshold: 0.7,
-    match_count: limit
-  })
+  // For now, let's get all chunks since we don't have embeddings yet
+  // In production, this would use vector similarity search
+  const { data: chunks, error } = await supabase
+    .from('document_chunks')
+    .select('*')
+    .eq('session_id', sessionId)
+    .limit(limit)
   
   if (error) throw error
   
-  return data.map((result: any) => ({
-    content: result.content,
-    similarity: result.similarity,
-    metadata: result.metadata
-  }))
+  // Simple keyword matching for demo purposes
+  const queryWords = query.toLowerCase().split(' ')
+  const scoredChunks = (chunks || []).map((chunk: any) => {
+    const content = chunk.content.toLowerCase()
+    const matchCount = queryWords.filter(word => content.includes(word)).length
+    const similarity = matchCount / queryWords.length
+    
+    return {
+      content: chunk.content,
+      similarity: similarity || 0.5, // Default similarity if no matches
+      metadata: chunk.metadata
+    }
+  })
+  
+  // Sort by similarity and return top results
+  return scoredChunks
+    .sort((a, b) => b.similarity - a.similarity)
+    .slice(0, limit)
 }

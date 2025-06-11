@@ -7,7 +7,11 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey)
 
 // Session management utilities
 export function getSessionId(): string {
-  if (typeof window === 'undefined') return ''
+  if (typeof window === 'undefined') {
+    // On server, we can't access localStorage
+    // Session ID should be passed from client
+    return ''
+  }
   
   let sessionId = localStorage.getItem('demo_session_id')
   if (!sessionId) {
@@ -17,25 +21,38 @@ export function getSessionId(): string {
   return sessionId
 }
 
+// Get or create session ID (client-side only)
+export function ensureSessionId(): string {
+  const sessionId = getSessionId()
+  if (!sessionId) {
+    throw new Error('Session ID not available on server. Pass it from client.')
+  }
+  return sessionId
+}
+
 export async function initializeSession() {
   const sessionId = getSessionId()
   
-  // Create or update session in database
-  const { error } = await supabase
-    .from('sessions')
-    .upsert({
-      id: sessionId,
-      last_activity: new Date().toISOString(),
-      expires_at: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString()
-    })
-    .eq('id', sessionId)
-    
-  if (error) {
-    console.error('Error initializing session:', error)
+  try {
+    // Create or update session in database
+    const { data, error } = await supabase
+      .from('sessions')
+      .upsert({
+        id: sessionId,
+        last_activity: new Date().toISOString(),
+        expires_at: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString()
+      })
+      .eq('id', sessionId)
+      .select()
+      
+    if (error) {
+      console.error('Error initializing session:', error)
+      // Don't throw - allow app to work even if session init fails
+    }
+  } catch (err) {
+    console.error('Failed to initialize session:', err)
+    // Don't throw - allow app to work even if session init fails
   }
-  
-  // For local development, RLS will use the session from the context
-  // In production, you might want to pass this via headers or JWT
   
   return sessionId
 }

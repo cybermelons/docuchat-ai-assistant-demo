@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react'
-import { ChatMessage } from '@/lib/supabase'
+import { ChatMessage, getSessionId } from '@/lib/supabase'
 
 interface ChatResponse {
   response: string
@@ -24,7 +24,12 @@ export function useChat() {
   const fetchMessages = async () => {
     try {
       setLoading(true)
-      const response = await fetch('/api/chat')
+      const sessionId = getSessionId()
+      const response = await fetch('/api/chat', {
+        headers: {
+          'x-session-id': sessionId
+        }
+      })
       const data = await response.json()
       
       if (!response.ok) {
@@ -45,17 +50,20 @@ export function useChat() {
       setSending(true)
       
       // Add user message optimistically
-      const userMessage: Partial<ChatMessage> = {
+      const sessionId = getSessionId()
+      const userMessage: ChatMessage = {
+        id: crypto.randomUUID(),
+        session_id: sessionId,
         role: 'user',
         content,
         created_at: new Date().toISOString()
       }
-      setMessages(prev => [...prev, userMessage as ChatMessage])
-      
+      setMessages(prev => [...prev, userMessage])
       const response = await fetch('/api/chat', {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json'
+          'Content-Type': 'application/json',
+          'x-session-id': sessionId
         },
         body: JSON.stringify({ message: content })
       })
@@ -67,13 +75,15 @@ export function useChat() {
       }
       
       // Add assistant response
-      const assistantMessage: Partial<ChatMessage> = {
+      const assistantMessage: ChatMessage = {
+        id: crypto.randomUUID(),
+        session_id: sessionId,
         role: 'assistant',
         content: data.response,
         metadata: { sources: data.sources },
         created_at: new Date().toISOString()
       }
-      setMessages(prev => [...prev, assistantMessage as ChatMessage])
+      setMessages(prev => [...prev, assistantMessage])
       
       return data
     } catch (err) {

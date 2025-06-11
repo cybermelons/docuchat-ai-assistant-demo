@@ -1,0 +1,27 @@
+AI Document Assistant - Sample Document
+
+This is a sample document to demonstrate the AI-powered document analysis capabilities of this application.
+
+Key Features:
+1. Upload documents in TXT or DOCX format
+2. Ask questions about the content
+3. Get AI-powered answers based on the document context
+4. Session-based isolation for each user
+
+How It Works:
+The system processes your document by breaking it into smaller chunks, generating embeddings for semantic search, and then using those embeddings to find relevant content when you ask questions. The AI then generates responses based on the most relevant chunks.
+
+Example Questions You Can Ask:
+- What are the key features of this system?
+- How does the document processing work?
+- What file formats are supported?
+- Tell me about session isolation
+
+Technical Implementation:
+- Frontend: Next.js with TypeScript and Tailwind CSS
+- Embeddings: Generated in the browser using Transformers.js
+- Chat: Powered by Groq API using the Mixtral model
+- Database: Supabase with PostgreSQL and pgvector
+- Security: Row Level Security with session-based isolation
+
+This demo showcases modern AI development practices and can be extended with additional features like multi-document search, document summarization, and more advanced natural language processing capabilities.

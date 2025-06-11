@@ -1,12 +1,18 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { searchDocuments } from '@/lib/document-processor'
 import { generateChatResponse } from '@/lib/groq'
-import { initializeSession, getSessionId, supabase } from '@/lib/supabase'
+import { supabase } from '@/lib/supabase'
 
 export async function POST(request: NextRequest) {
   try {
-    await initializeSession()
-    const sessionId = getSessionId()
+    // Get session ID from header
+    const sessionId = request.headers.get('x-session-id')
+    if (!sessionId) {
+      return NextResponse.json(
+        { error: 'Session ID required' },
+        { status: 400 }
+      )
+    }
     
     const { message } = await request.json()
     
@@ -27,7 +33,7 @@ export async function POST(request: NextRequest) {
       })
     
     // Search for relevant document chunks
-    const relevantChunks = await searchDocuments(message, 5)
+    const relevantChunks = await searchDocuments(message, sessionId, 5)
     
     if (relevantChunks.length === 0) {
       const noDocsMessage = "I don't have any documents to search through yet. Please upload a document first, and then I'll be happy to answer questions about it!"
@@ -90,10 +96,16 @@ export async function POST(request: NextRequest) {
   }
 }
 
-export async function GET() {
+export async function GET(request: NextRequest) {
   try {
-    await initializeSession()
-    const sessionId = getSessionId()
+    // Get session ID from header
+    const sessionId = request.headers.get('x-session-id')
+    if (!sessionId) {
+      return NextResponse.json(
+        { error: 'Session ID required' },
+        { status: 400 }
+      )
+    }
     
     const { data, error } = await supabase
       .from('chat_messages')

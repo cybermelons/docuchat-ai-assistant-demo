@@ -1,16 +1,26 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { processDocument, getDocuments, deleteDocument } from '@/lib/document-processor'
-import { initializeSession } from '@/lib/supabase'
 
-export async function GET() {
+export async function GET(request: NextRequest) {
   try {
-    await initializeSession()
-    const documents = await getDocuments()
+    // Get session ID from header
+    const sessionId = request.headers.get('x-session-id')
+    if (!sessionId) {
+      return NextResponse.json(
+        { error: 'Session ID required' },
+        { status: 400 }
+      )
+    }
+    
+    const documents = await getDocuments(sessionId)
     return NextResponse.json({ documents })
   } catch (error) {
     console.error('Error fetching documents:', error)
     return NextResponse.json(
-      { error: 'Failed to fetch documents' },
+      { 
+        error: 'Failed to fetch documents',
+        details: error instanceof Error ? error.message : 'Unknown error'
+      },
       { status: 500 }
     )
   }
@@ -18,7 +28,14 @@ export async function GET() {
 
 export async function POST(request: NextRequest) {
   try {
-    await initializeSession()
+    // Get session ID from header
+    const sessionId = request.headers.get('x-session-id')
+    if (!sessionId) {
+      return NextResponse.json(
+        { error: 'Session ID required' },
+        { status: 400 }
+      )
+    }
     
     const formData = await request.formData()
     const file = formData.get('file') as File
@@ -30,8 +47,8 @@ export async function POST(request: NextRequest) {
       )
     }
     
-    // Process document without progress tracking (would need SSE or WebSockets for real-time)
-    const document = await processDocument(file)
+    // Process document with session ID
+    const document = await processDocument(file, sessionId)
     
     return NextResponse.json({ document })
   } catch (error) {
@@ -45,7 +62,14 @@ export async function POST(request: NextRequest) {
 
 export async function DELETE(request: NextRequest) {
   try {
-    await initializeSession()
+    // Get session ID from header
+    const sessionId = request.headers.get('x-session-id')
+    if (!sessionId) {
+      return NextResponse.json(
+        { error: 'Session ID required' },
+        { status: 400 }
+      )
+    }
     
     const { searchParams } = new URL(request.url)
     const documentId = searchParams.get('id')
@@ -57,7 +81,7 @@ export async function DELETE(request: NextRequest) {
       )
     }
     
-    await deleteDocument(documentId)
+    await deleteDocument(documentId, sessionId)
     
     return NextResponse.json({ success: true })
   } catch (error) {

@@ -1,10 +1,13 @@
-import { pipeline } from '@xenova/transformers'
-
 let embeddingPipeline: any = null
 
 // Initialize the embedding pipeline
 export async function initializeEmbeddings() {
+  if (typeof window === 'undefined') {
+    throw new Error('Embeddings can only be initialized on the client side')
+  }
+  
   if (!embeddingPipeline) {
+    const { pipeline } = await import('@xenova/transformers')
     embeddingPipeline = await pipeline(
       'feature-extraction',
       'Xenova/all-MiniLM-L6-v2'

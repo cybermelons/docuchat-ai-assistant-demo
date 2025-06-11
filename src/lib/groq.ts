@@ -31,7 +31,8 @@ export async function generateChatResponse(context: ChatContext): Promise<string
   
   const systemPrompt = `You are a helpful AI assistant that answers questions based on the provided document context. 
 Always cite the specific sections [1], [2], etc. when referencing information from the context.
-If the context doesn't contain relevant information to answer the question, say so clearly.`
+If the context doesn't contain relevant information to answer the question, say so clearly.
+Do not use any thinking tags or internal monologue - provide direct answers only.`
 
   const userPrompt = `Context from the document:
 ${contextText}
@@ -46,13 +47,18 @@ Please provide a comprehensive answer based on the context above.`
         { role: 'system', content: systemPrompt },
         { role: 'user', content: userPrompt }
       ],
-      model: 'mixtral-8x7b-32768',
+      model: 'deepseek-r1-distill-llama-70b',
       temperature: 0.3,
       max_tokens: 1000,
       stream: false
     })
     
-    return completion.choices[0]?.message?.content || 'Sorry, I could not generate a response.'
+    let content = completion.choices[0]?.message?.content || 'Sorry, I could not generate a response.'
+    
+    // Remove thinking tags if present
+    content = content.replace(/<think>[\s\S]*?<\/think>/g, '').trim()
+    
+    return content
   } catch (error) {
     console.error('Error generating chat response:', error)
     

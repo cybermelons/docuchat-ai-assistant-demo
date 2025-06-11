@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react'
-import { Document } from '@/lib/supabase'
+import { Document, getSessionId } from '@/lib/supabase'
 import { ProcessingProgress } from '@/lib/document-processor'
 
 export function useDocuments() {
@@ -16,15 +16,30 @@ export function useDocuments() {
   const fetchDocuments = async () => {
     try {
       setLoading(true)
-      const response = await fetch('/api/documents')
+      const sessionId = getSessionId()
+      
+      const response = await fetch('/api/documents', {
+        headers: {
+          'x-session-id': sessionId
+        }
+      })
+      
+      // Check if response is JSON
+      const contentType = response.headers.get('content-type')
+      if (!contentType || !contentType.includes('application/json')) {
+        console.error('Response is not JSON:', await response.text())
+        throw new Error('Server returned non-JSON response')
+      }
+      
       const data = await response.json()
       
       if (!response.ok) {
         throw new Error(data.error || 'Failed to fetch documents')
       }
       
-      setDocuments(data.documents)
+      setDocuments(data.documents || [])
     } catch (err) {
+      console.error('Error fetching documents:', err)
       setError(err instanceof Error ? err.message : 'Failed to fetch documents')
     } finally {
       setLoading(false)
@@ -36,11 +51,15 @@ export function useDocuments() {
       setError(null)
       setProcessingProgress({ stage: 'uploading', progress: 0, message: 'Starting upload...' })
       
+      const sessionId = getSessionId()
       const formData = new FormData()
       formData.append('file', file)
       
       const response = await fetch('/api/documents', {
         method: 'POST',
+        headers: {
+          'x-session-id': sessionId
+        },
         body: formData
       })
       
@@ -68,9 +87,13 @@ export function useDocuments() {
   const deleteDocument = async (documentId: string) => {
     try {
       setError(null)
+      const sessionId = getSessionId()
       
       const response = await fetch(`/api/documents?id=${documentId}`, {
-        method: 'DELETE'
+        method: 'DELETE',
+        headers: {
+          'x-session-id': sessionId
+        }
       })
       
       if (!response.ok) {
