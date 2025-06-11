@@ -42,18 +42,18 @@ export default function Sidebar({ documents, selectedDoc, onSelectDoc, onUploadD
   });
 
   return (
-    <div className="w-80 bg-background border-r flex flex-col">
+    <div className="w-80 bg-background border-r border-border flex flex-col">
       <div className="p-6 border-b">
         <h1 className="text-2xl font-bold">DocuChat</h1>
         <p className="text-sm text-muted-foreground mt-1">AI Document Assistant</p>
       </div>
 
       {/* Upload Area */}
-      <div className="p-4">
+      <div className="p-4 space-y-4">
         <Card
           {...getRootProps()}
-          className={`border-2 border-dashed p-6 text-center cursor-pointer transition-colors ${
-            isDragActive ? 'border-primary bg-primary/5' : 'hover:border-muted-foreground/50'
+          className={`border-2 border-dashed p-8 text-center cursor-pointer transition-colors rounded-lg ${
+            isDragActive ? 'border-primary bg-primary/5' : 'border-border hover:border-muted-foreground/50'
           }`}
         >
           <input {...getInputProps()} />
@@ -68,7 +68,7 @@ export default function Sidebar({ documents, selectedDoc, onSelectDoc, onUploadD
         
         {/* Processing Progress */}
         {processingProgress && (
-          <Card className="mt-4 p-3">
+          <Card className="p-4">
             <div className="flex items-center justify-between mb-2">
               <span className="text-xs font-medium">
                 {processingProgress.message}
@@ -89,12 +89,12 @@ export default function Sidebar({ documents, selectedDoc, onSelectDoc, onUploadD
 
       {/* Documents List */}
       <ScrollArea className="flex-1">
-        <div className="px-4 py-2">
+        <div className="px-4 py-3">
           <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
             Documents ({documents.length})
           </h3>
         </div>
-        <div className="space-y-1 px-2">
+        <div className="space-y-2 px-4 pb-4">
           {loading ? (
             <DocumentListSkeleton />
           ) : documents.length === 0 ? (
@@ -105,10 +105,10 @@ export default function Sidebar({ documents, selectedDoc, onSelectDoc, onUploadD
             documents.map((doc) => (
             <Card
               key={doc.id}
-              className={`group flex items-center gap-3 px-3 py-2 transition-colors cursor-pointer ${
+              className={`group flex items-center gap-3 p-3 transition-all cursor-pointer rounded-lg ${
                 selectedDoc === doc.id
-                  ? 'bg-primary/10 border-primary'
-                  : 'hover:bg-muted'
+                  ? 'bg-primary/10 border-primary shadow-sm'
+                  : 'hover:bg-muted border-transparent'
               }`}
             >
               <button

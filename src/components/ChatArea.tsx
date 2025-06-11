@@ -150,13 +150,14 @@ export default function ChatArea({ selectedDoc, documents, messages, onSendMessa
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
                 placeholder="Ask a question about the document..."
-                className="flex-1"
+                className="flex-1 h-11 px-4"
                 disabled={sending}
               />
               <Button
                 type="submit"
                 disabled={!input.trim() || sending}
                 size="icon"
+                className="h-11 w-11"
               >
                 <Send className="w-5 h-5" />
               </Button>
