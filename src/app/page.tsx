@@ -42,10 +42,10 @@ export default function Home() {
         </div>
         
         {/* Main Chat Area */}
-        <div className="flex-1 flex flex-col">
+        <div className="flex-1 flex flex-col relative">
           {/* Desktop Header */}
-          <div className="hidden md:block border-b">
-            <div className="flex h-14 items-center px-6 justify-end">
+          <div className="hidden md:block w-full absolute border-b ">
+            <div className="flex w-full h-14 items-center px-6 justify-end">
               <ThemeToggle />
             </div>
           </div>

@@ -48,7 +48,7 @@ export default function ChatArea({ selectedDoc, documents, messages, onSendMessa
   const selectedDocument = documents.find(doc => doc.id === selectedDoc);
 
   return (
-    <div className="flex-1 flex flex-col">
+    <div className="h-full flex flex-col ">
       {/* Header */}
       <div className="bg-background border-b px-6 py-4">
         <h2 className="text-lg font-semibold">
@@ -62,7 +62,7 @@ export default function ChatArea({ selectedDoc, documents, messages, onSendMessa
       </div>
 
       {/* Messages Area */}
-      <ScrollArea className="flex-1 bg-muted/10">
+      <ScrollArea className="flex-1 bg-muted/10 h-24">
         {documents.length === 0 ? (
           <div className="h-full flex items-center justify-center">
             <div className="text-center">
@@ -150,14 +150,13 @@ export default function ChatArea({ selectedDoc, documents, messages, onSendMessa
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
                 placeholder="Ask a question about the document..."
-                className="flex-1 h-11 px-4"
+                className="flex-1"
                 disabled={sending}
               />
               <Button
                 type="submit"
                 disabled={!input.trim() || sending}
                 size="icon"
-                className="h-11 w-11"
               >
                 <Send className="w-5 h-5" />
               </Button>
