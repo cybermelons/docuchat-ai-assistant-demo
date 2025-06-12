@@ -1,0 +1,11 @@
+{
+  "functions": {
+    "src/app/api/**/*": {
+      "maxDuration": 30
+    }
+  },
+  "installCommand": "pnpm install",
+  "buildCommand": "pnpm build",
+  "outputDirectory": ".next",
+  "ignoreCommand": "git diff --quiet HEAD^ HEAD -- . ':!supabase'"
+}
