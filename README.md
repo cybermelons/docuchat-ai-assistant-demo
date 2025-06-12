@@ -1,6 +1,9 @@
-# AI Document Assistant
+# DocuChat - AI Document Assistant
 
 An intelligent document assistant that helps you chat with your documents using AI. Upload documents, ask questions, and get instant answers based on your content.
+
+🔗 **Live Demo**: [Coming Soon]  
+📚 **Repository**: [github.com/cybermelons/docuchat-ai-assistant-demo](https://github.com/cybermelons/docuchat-ai-assistant-demo)
 
 ## 🎯 Portfolio Demo
 
